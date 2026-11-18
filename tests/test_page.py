@@ -316,3 +316,25 @@ class PageMarkupTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+class ReadmeRulesAndLicenceTest(unittest.TestCase):
+    def _read(self, name):
+        with open(os.path.join(os.path.dirname(WEB), name), encoding="utf-8") as fh:
+            return fh.read()
+
+    def test_the_readme_states_stashdbs_rules(self):
+        readme = self._read("README.md")
+        rules = readme[readme.index("## StashDB's rules"):]
+        rules = rules[:rules.index("\n## ", 4)]
+        for needle in ("(https://discourse.stashapp.cc/t/rules-for-api-access/21336)",
+                       "User-Agent", "60 requests a minute", "scene search",
+                       "commercial"):
+            self.assertIn(needle, rules)
+
+    def test_the_code_is_mit_licensed(self):
+        licence = self._read("LICENSE")
+        self.assertTrue(licence.startswith("MIT License"))
+        self.assertIn("Copyright (c) 2026 dirty-ninja", licence)
+        self.assertIn("WITHOUT WARRANTY OF ANY KIND", licence)
+        readme = self._read("README.md")
+        self.assertIn("## Licence", readme)
+        self.assertIn("[MIT](LICENSE)", readme)

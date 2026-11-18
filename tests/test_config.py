@@ -59,7 +59,16 @@ class TestConfig(unittest.TestCase):
 
     def test_interval_below_the_floor_is_raised(self):
         cfg = config.load(None, env={"TAGGER_REQUEST_INTERVAL_SECONDS": "0.01"})
-        self.assertEqual(cfg["request_interval_seconds"], 0.34)
+        self.assertEqual(cfg["request_interval_seconds"], 1.0)
+
+    def test_the_floor_and_default_keep_to_stashdbs_60_requests_a_minute(self):
+        # StashDB's rules for API access: "Please observe a rate limit of 60
+        # req/minute." Breaking them loses the account its access.
+        self.assertGreaterEqual(config.MIN_REQUEST_INTERVAL, 1.0)
+        self.assertEqual(config.DEFAULTS["request_interval_seconds"],
+                         config.MIN_REQUEST_INTERVAL)
+        cfg = config.load(None, env={"TAGGER_REQUEST_INTERVAL_SECONDS": "0.34"})
+        self.assertEqual(cfg["request_interval_seconds"], config.MIN_REQUEST_INTERVAL)
 
     def test_invalid_json_names_the_file(self):
         path = self._write("{not json")

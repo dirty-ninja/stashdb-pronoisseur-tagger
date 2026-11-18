@@ -35,7 +35,8 @@ class StashDBError(Exception):
 
 
 class StashDB:
-    def __init__(self, endpoint, api_key, interval=0.34, transport=None, timeout=30):
+    #: ``config.MIN_REQUEST_INTERVAL``: StashDB allows 60 requests a minute.
+    def __init__(self, endpoint, api_key, interval=1.0, transport=None, timeout=30):
         self.endpoint = endpoint
         self.api_key = api_key
         self.interval = interval

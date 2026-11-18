@@ -12,8 +12,10 @@ import os
 DEFAULT_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                             "config.json")
 
-#: StashDB's rate limit; asking faster than this is never honoured.
-MIN_REQUEST_INTERVAL = 0.34
+#: Seconds between StashDB requests. StashDB's rules for API access allow 60
+#: requests a minute and cut off any application that goes faster, so a
+#: config can slow the tool down but never take it below this.
+MIN_REQUEST_INTERVAL = 1.0
 
 
 class ConfigError(Exception):

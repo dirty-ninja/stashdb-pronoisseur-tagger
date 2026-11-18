@@ -52,7 +52,7 @@ There are no setup files to edit. The strip at the top highlights the step you a
    - If the test can't reach Pronoisseur, look at the line under "Enable the Local API" in Settings → Connected apps. Windows can reserve blocks of ports for itself, for example for Hyper-V or WSL, and Pronoisseur then reports that the port is in use even though no program has it. Change Port there to a different number, such as 28869, and use the same number in the address here.
 
    ![The Connect step with a saved StashDB key and a Pronoisseur token that can read and write](docs/screenshots/connect.png)
-2. **Scan.** Reads the library from Pronoisseur and sorts the videos into groups by what is already known about them. A scan always covers the whole library: nothing is read from your files, so even a large library takes minutes.
+2. **Scan.** Reads the library from Pronoisseur and sorts the videos into groups by what is already known about them. A scan always covers the whole library and reads nothing from your files. At StashDB's pace of one request a second, the first scan of 1,000 folders named with a StashDB scene id takes about 17 minutes; a library without them is much quicker (see [StashDB's rules](#stashdbs-rules)).
 3. **Identify by fingerprint.** Takes the fingerprints Pronoisseur gave at Scan and asks StashDB which scenes they belong to. No file is opened or hashed, so a large library takes minutes rather than hours. Results are looked up in small batches, so you can check and tag them while the run continues. Files the run has not reached yet stay out of the list until it does. When it finishes, the line above the list says how many videos had a perceptual hash and how many are pending.
 4. **Check matches and tag.** One list of every video the run found something about, grouped by model, using the models the video already has and the cast of the scene StashDB matched it to. A short "How this works" box sits at the top; fold it away and it stays folded.
 
@@ -87,6 +87,17 @@ To Pronoisseur, for each video you write:
 - Accepts requests from other websites. Requests carrying a foreign `Origin` are refused, POSTs must be JSON, and the Pronoisseur address must be on this computer.
 - Sends your keys anywhere except the service they belong to. They are never shown back in the page.
 
+## StashDB's rules
+
+StashDB's admins publish [rules for API access](https://discourse.stashapp.cc/t/rules-for-api-access/21336) that apply to every application other than Stash, and breaking one costs the account its access. The tool keeps to them:
+
+- It names itself in the `User-Agent` header of every request.
+- It sends at most 60 requests a minute: one a second. `request_interval_seconds` in `config.json` can make it slower, never faster.
+- It never uses scene search. Scenes are found by fingerprint, by id, or with a scene query.
+- StashDB data may not be used commercially. The tool is for tagging your own library.
+
+Identify asks about up to 40 fingerprints in one request, so the pace barely shows there. Scan feels it more: it fetches each StashDB scene id it finds in a folder name, once, and reuses that copy for 30 days.
+
 ## Where its data lives
 
 Both files sit next to `run.py` and are ignored by git.
@@ -105,3 +116,7 @@ Deleting `tagger-state.db` loses your decisions and cached scenes; it does not c
 ```
 python -m unittest discover -s tests
 ```
+
+## Licence
+
+[MIT](LICENSE). Use it, change it and share it; keep the copyright notice.

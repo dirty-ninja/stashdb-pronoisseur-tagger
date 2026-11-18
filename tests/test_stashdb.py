@@ -1,6 +1,11 @@
 import unittest
 
+import os
+
+from tagger import config
 from tagger.stashdb import MAX_PER_PAGE, StashDB, StashDBError
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def fake_transport(pages, root="queryPerformers", list_key="performers"):
@@ -152,3 +157,22 @@ class TestUnsendableKey(unittest.TestCase):
             client.execute("query { x }", {})
         self.assertNotIn("fake-key", str(ctx.exception))
         self.assertIn("StashDB request failed", str(ctx.exception))
+class TestStashDBRules(unittest.TestCase):
+    """StashDB's rules for any application using its API (2026-11-15): name
+    yourself in the User-Agent, no commercial use, no scene search, and at
+    most 60 requests a minute. Breaking one loses the account its access."""
+
+    def test_a_client_paces_itself_to_60_requests_a_minute(self):
+        client = StashDB("http://x/graphql", "key")
+        self.assertGreaterEqual(client.interval, 1.0)
+        self.assertEqual(client.interval, config.MIN_REQUEST_INTERVAL)
+
+    def test_nothing_uses_scene_search(self):
+        # Fingerprint lookups, scene queries and lookups by id only.
+        for folder in ("tagger", "web", "scripts"):
+            for dirpath, _, files in os.walk(os.path.join(ROOT, folder)):
+                for name in files:
+                    if not name.endswith((".py", ".js")):
+                        continue
+                    with open(os.path.join(dirpath, name), encoding="utf-8") as fh:
+                        self.assertNotIn("searchScene", fh.read(), name)
