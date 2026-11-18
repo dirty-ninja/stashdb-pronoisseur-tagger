@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StashDB Tagger for Pronoisseur</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><img class="brand-mark" src="/favicon.svg" alt="" width="24" height="24">StashDB Tagger <span>for Pronoisseur</span></div>
+</header>
+
+<main>
+<section class="panel" id="library">
+  <p class="lede">Match the videos in your <b>Pronoisseur</b> library against
+    StashDB and write the results back through its Local API. Files are identified
+    by the fingerprints Pronoisseur has worked out. If a folder name carries a
+    StashDB scene id, as Whisparr's do, that is a shortcut, and the id is still checked against the file. Nothing is
+    written until you have seen the diff.</p>
+  <!-- The map. Four steps in the order they have to happen, rendered LATE in
+       `loadLibrary` because step 4 reads the write preview, but sitting first —
+       and sticky — because the order is the point and it has to stay in reach
+       once the page runs to a thousand rows. -->
+  <ol id="library-workflow" class="workflow"></ol>
+
+  <!-- One collapsible panel per step. Wrappers, heads and bodies are static so
+       the render can toggle them without rebuilding the containers the rest of
+       the page writes into. A head is a button — the whole row toggles its
+       section. -->
+  <div class="lib-sections" id="library-sections">
+
+    <section class="lib-section" id="library-section-connect" data-section="connect">
+      <button type="button" class="lib-head" id="library-head-connect"></button>
+      <div class="lib-body" id="library-body-connect">
+        <div id="library-connect"></div>
+      </div>
+    </section>
+
+    <section class="lib-section" id="library-section-scan" data-section="scan">
+      <button type="button" class="lib-head" id="library-head-scan"></button>
+      <div class="lib-body" id="library-body-scan">
+        <p class="hint step-line">Reads your untagged videos from Pronoisseur.
+          Where a folder name has a StashDB scene id, fetches that scene and
+          checks it against the video's fingerprint. Nothing is written.</p>
+        <div id="library-controls" hidden></div>
+        <div id="library-buckets"></div>
+      </div>
+    </section>
+
+    <section class="lib-section" id="library-section-identify" data-section="identify">
+      <button type="button" class="lib-head" id="library-head-identify"></button>
+      <div class="lib-body" id="library-body-identify">
+        <p class="hint step-line">Sends each remaining video's fingerprints to
+          StashDB, 40 at a time. Nothing is written.</p>
+        <div id="library-identify"></div>
+      </div>
+    </section>
+
+    <!-- Check matches and tag: one list, grouped by model, of everything the
+         run found - matched and ticked, waiting for you to choose a match, or
+         with no match - and the one button that tags the ticked videos. -->
+    <section class="lib-section" id="library-section-review" data-section="review">
+      <button type="button" class="lib-head" id="library-head-review"></button>
+      <div class="lib-body" id="library-body-review">
+        <p class="hint step-line">Writes only the ticked videos to Pronoisseur.
+          StashDB is only read.</p>
+        <details class="how-box" id="lib-how" open>
+          <summary>How this works</summary>
+          <ol>
+            <li>Each video sits beside the StashDB scene it matched: a frame
+              from <b>your file</b> next to the StashDB cover. If they are the
+              same video, it is the right match.</li>
+            <li><span class="kind-badge ready">Matched</span> The tool found this
+              video's StashDB scene, and each card says how. The fingerprints it
+              looks up come from Pronoisseur; nothing is hashed here. It is
+              ticked, ready to tag. Untick any match that's wrong.</li>
+            <li><span class="kind-badge pick">Choose a match</span> StashDB has
+              more than one scene that could be this video, or one that is not
+              close enough to be sure. <b>Use this match</b> on the right one, or
+              <b>None of these match</b>. <b>Recommended</b> marks the best fit,
+              and <b>Use recommended</b> takes it for you, but only where its
+              length matches your file. A video you choose moves to Matched,
+              ticked.</li>
+            <li><span class="kind-badge none">No match</span> StashDB has no scene
+              with this file's fingerprint. Search for it by name.</li>
+            <li><span class="kind-badge wait">Pending hashing</span> Pronoisseur
+              has no perceptual fingerprint for this video yet, and its exact
+              one found nothing on StashDB. Search for it by name, or scan and
+              identify again once Pronoisseur has fingerprinted it.</li>
+            <li><b>Tag</b> writes the match of each ticked video the list is
+              showing into Pronoisseur: title, date, studio, models and
+              categories, and a link to the StashDB scene. The tabs and the
+              filter narrow both Tag and Use recommended, exactly as they
+              narrow the list.
+              Nothing is removed, and your video files are never opened or
+              changed.</li>
+          </ol>
+        </details>
+        <div id="library-mapping"></div>
+        <!-- Static, not rendered: a filter box rebuilt on every poll loses the
+             caret mid-word. Only its hint line and the kind chips are written
+             by the render. -->
+        <div class="lib-filter">
+          <label class="inline">Filter by filename
+            <input type="search" id="lib-review-filter"
+                   placeholder="part of a path or a title">
+          </label>
+          <span id="lib-review-kinds" class="kind-chips"></span>
+          <span class="hint" id="lib-review-filter-hint"></span>
+        </div>
+        <!-- The write: totals, the opt-in ticks, Tag N videos, and what a run
+             did. -->
+        <div id="library-preview"></div>
+        <!-- Written outside the list's own redraw: while the user is working in
+             a card, it counts the rows that are waiting for them to finish. -->
+        <div id="lib-review-fresh"></div>
+        <!-- Static, so they stay put while the list redraws; hidden by the
+             render when the list has no groups to open. -->
+        <div class="lib-expand-row" id="lib-review-expand-row" hidden>
+          <button type="button" class="ghost small" id="lib-review-expand">Expand
+            all</button>
+          <button type="button" class="ghost small" id="lib-review-collapse">Collapse
+            all</button>
+        </div>
+        <div id="library-questions"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Always in reach: the current step's one action, and one line saying where
+       the library stands. The buttons inside the sections stay, and both wire
+       to the same handlers. -->
+  <div class="lib-bar" id="library-bar" hidden></div>
+  <!-- Holds the bar's place while it is hidden, so the page does not change
+       height when the bar comes and goes. -->
+  <div class="lib-bar-gap" id="library-bar-gap" hidden></div>
+</section>
+
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card">
+    <h3 id="modal-title">Confirm</h3>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="ghost" id="modal-cancel">Cancel</button>
+      <button class="primary" id="modal-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

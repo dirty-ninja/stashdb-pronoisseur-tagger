@@ -1,0 +1,715 @@
+:root {
+  /* Pronoisseur's palette: the app's hot pink accent and its own red, amber
+     and green, on pronoisseur.com's neutral darks. */
+  --bg: #1B1B1E;
+  --bg-2: #232327;
+  --bg-3: #2C2C30;
+  --line: #36363D;
+  --text: #F2F2F7;
+  --muted: #A3A3AC;
+  --accent: #FF4D9D;
+  /* Dark text on the pink, as pronoisseur.com has it: 5.5:1, where white on
+     the same pink is 3.1:1. */
+  --accent-fg: #1B1B1E;
+  --accent-muted: #3A1F30;
+  --warn: #FFB84A;
+  --bad: #E84B4B;
+  --good: #4FB477;
+  --fill: #6cb6ff;
+  /* Pronoisseur's corner scale: small for badges, medium for controls,
+     large for the boxes that hold them. */
+  --radius-sm: 4px;
+  --radius: 7px;
+  --radius-lg: 12px;
+  /* What the top bar occupies, so a second sticky thing under it knows where to
+     stop. A token rather than a measurement: the bar's height is a function of
+     this stylesheet and nothing else. */
+  --topbar-h: 50px;
+}
+
+* { box-sizing: border-box; }
+
+/* `hidden` is only `display: none` from the UA sheet, so any class rule setting
+   display (.modal, .lib-bar) silently defeats it. Restore it. */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg) linear-gradient(180deg, #2A2730, var(--bg) 520px) no-repeat;
+  color: var(--text);
+  font: 14px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+button { font: inherit; cursor: pointer; }
+h2, h3 { margin: 0 0 .2rem; font-weight: 600; }
+.muted { color: var(--muted); }
+
+/* ------------------------------------------------------------- top bar */
+
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 1.5rem;
+  /* Exactly the token's height, so the step strip stuck under it meets it with
+     no gap for the list to show through. The side padding lines the brand up
+     with `main`'s content column, however wide the window. */
+  height: var(--topbar-h);
+  padding: 0 max(1.25rem, calc((100% - 1500px) / 2 + 1.25rem));
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand { font-weight: 700; font-size: 16px; letter-spacing: .01em; }
+.brand span { color: var(--accent); font-weight: 600; }
+/* The mark: inline, not a flex item, so the space before "for Pronoisseur"
+   stays an ordinary space. */
+.brand-mark { width: 24px; height: 24px; vertical-align: -6px; margin-right: .55rem; }
+
+/* ------------------------------------------------------------- layout */
+
+main { padding: 1.25rem; max-width: 1500px; margin: 0 auto; }
+.lede { color: var(--muted); max-width: 62ch; margin: 0 0 1rem; }
+
+input, select {
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: .4rem .5rem; font: inherit; text-transform: none;
+  letter-spacing: normal; width: 100%;
+}
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+/* Where the keyboard is, on every control: a ring in the accent, clear of the
+   control's own edge. Keyboard focus only - a click draws none. */
+button:focus-visible, summary:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.hint { color: var(--muted); font-size: 12.5px; }
+
+.primary, .secondary, .ghost, .accent {
+  border-radius: var(--radius); padding: .45rem .95rem; border: 1px solid var(--line);
+  transition: background-color .12s, border-color .12s, color .12s, filter .12s;
+}
+.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+.accent { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+.ghost { background: transparent; color: var(--muted); }
+.ghost:hover { color: var(--text); border-color: var(--muted); }
+.primary:hover:not(:disabled), .accent:hover:not(:disabled) { filter: brightness(1.08); }
+.primary:active:not(:disabled), .accent:active:not(:disabled) { filter: brightness(.93); }
+/* The action beside the main one: the accent as an outline, so each area has
+   exactly one solid pink button and the eye knows which matters most. */
+.secondary {
+  background: transparent; color: var(--accent); border-color: var(--accent);
+  font-weight: 600;
+}
+.secondary:hover:not(:disabled) { background: var(--accent-muted); }
+/* Loud enough to read as "not now" rather than "not working": the sticky bar
+   keeps one button on screen at all times, and half of those states are a
+   button you may not press yet. */
+.primary:disabled, .secondary:disabled, .accent:disabled, .ghost:disabled {
+  opacity: .4; cursor: not-allowed; filter: saturate(.4);
+}
+.ghost:disabled:hover { color: var(--muted); border-color: var(--line); }
+
+/* ----------------------------------------------------------- estimate */
+
+.estimate {
+  background: var(--bg-3); border: 1px solid var(--accent);
+  border-radius: var(--radius-lg); padding: .85rem 1rem; margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+.estimate .figure { font-size: 15px; }
+.estimate .figure b { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------ results */
+
+/* scene cover grid — you pick these by looking, so the cover is the control */
+
+.scene-grid {
+  display: grid; gap: .8rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.scene-card {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); overflow: hidden; cursor: pointer;
+  display: flex; flex-direction: column;
+  transition: border-color .12s, transform .12s;
+}
+.scene-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+/* The grid's recommendation, marked in the eye and nowhere else: nothing is
+   recorded until the card is clicked. */
+.scene-card.is-recommended {
+  border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+.scene-card .cover {
+  /* StashDB scene covers measure 1200x720 = 5:3. Using 16/9 crops ~6% off
+     every one of them. object-fit still handles the odd wider JAV composite. */
+  position: relative; aspect-ratio: 5 / 3;
+  background: var(--bg-3);
+  display: grid; place-items: center; overflow: hidden;
+}
+/* <img loading="lazy"> rather than a CSS background: a grid can hold hundreds of
+   scenes, and background images do not lazy-load, so every cover would be
+   requested from stashdb.org the moment the panel opens. */
+.scene-card .cover img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.scene-card .no-cover { color: var(--muted); font-size: 12px; }
+
+.scene-card .tick {
+  position: absolute; top: .45rem; left: .45rem; margin: 0;
+  background: rgba(20, 20, 23, .72); border-radius: var(--radius-sm);
+  padding: .2rem .25rem; line-height: 0;
+}
+.scene-card .tick input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+.scene-card .duration {
+  position: absolute; right: .45rem; bottom: .45rem;
+  background: rgba(20, 20, 23, .78); color: var(--text);
+  border-radius: var(--radius-sm); padding: .05rem .35rem;
+  font-size: 11.5px; font-variant-numeric: tabular-nums;
+}
+
+.scene-body { padding: .55rem .65rem .7rem; display: grid; gap: .25rem; }
+.scene-title {
+  font-weight: 600; font-size: 13.5px; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.scene-meta {
+  display: flex; justify-content: space-between; gap: .5rem;
+  color: var(--muted); font-size: 12px;
+}
+.scene-meta .studio { color: var(--accent); text-align: right; }
+
+/* table */
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+tbody tr:hover { background: var(--bg-2); }
+td.tick { width: 2.2rem; }
+td.tick input { width: auto; }
+.pill {
+  font-size: 11.5px; padding: .1rem .45rem; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--muted);
+}
+
+.empty { color: var(--muted); padding: 2rem; text-align: center; }
+
+.inline { display: inline-flex; align-items: center; gap: .35rem; color: var(--muted); font-size: 12.5px; }
+.inline input { width: auto; }
+
+/* -------------------------------------------------------------- modal */
+
+.modal {
+  position: fixed; inset: 0; z-index: 80; display: grid; place-items: center;
+  background: rgba(20, 20, 23, .72);
+}
+.modal-card {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: 1.25rem; width: min(540px, 92vw);
+}
+.modal-card p { color: var(--muted); }
+.modal-card .warn { color: var(--warn); }
+.modal-card .bad { color: var(--bad); }
+.modal-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1.1rem; }
+.modal-card ul { margin: .4rem 0 0; padding-left: 1.1rem; color: var(--muted); }
+
+/* ------------------------------------------------------------- toasts */
+
+.toasts { position: fixed; right: 1rem; bottom: 1rem; z-index: 90; display: grid; gap: .5rem; }
+.toast {
+  background: var(--bg-3); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: var(--radius); padding: .6rem .85rem; max-width: 460px;
+}
+.toast.bad { border-left-color: var(--bad); }
+.toast.good { border-left-color: var(--good); }
+.toast b { display: block; margin-bottom: .15rem; }
+.toast span { color: var(--muted); font-size: 12.5px; }
+
+.spinner { color: var(--muted); padding: 1.5rem; text-align: center; }
+
+/* --------------------------------------------------------- toolbars */
+
+.toolbar {
+  display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+  padding: .5rem 0 .8rem;
+}
+.small { padding: .25rem .6rem; font-size: 12.5px; }
+.toolbar .spacer { margin-left: auto; }
+.hint.pad { padding: .4rem 0; }
+.hint.pad.connect-help { color: var(--warn); font-size: 13px; }
+.hint.pad.warn { color: var(--warn); }
+
+.cache-flag {
+  color: var(--warn); font-size: 12.5px;
+  border: 1px solid var(--warn); border-radius: 999px; padding: .1rem .55rem;
+}
+
+.cat-list { display: flex; flex-wrap: wrap; gap: .35rem; }
+.empty.bad { color: var(--bad); }
+
+/* ---------------------------------------------------- library: workflow */
+
+/* Five steps across the top of the page. `is-current` is the loud one - there
+   can be two of them, because Review and Apply are both open once identify has
+   run - and `is-next` is deliberately quiet: a dim step is one you cannot
+   usefully press yet. Empty before the first load, and an empty bordered box
+   at the top of the page would read as a failure, so it collapses. */
+.workflow:empty { display: none; }
+.workflow {
+  /* Stuck under the top bar. The map is how you get around a page that runs to a
+     thousand rows, and a map you have to scroll back to is not one. The negative
+     side margins and matching padding let the content scroll UNDER it rather
+     than beside it - `main` has 1.25rem of padding, and without this the strip's
+     background would stop short of it and rows would show through the gap. */
+  position: sticky; top: var(--topbar-h); z-index: 30;
+  display: grid; gap: .5rem; padding: .85rem 1.25rem .8rem;
+  margin: 0 -1.25rem 1rem; list-style: none;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 10px 18px -14px rgba(0, 0, 0, .9);
+  grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+}
+.workflow .step {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: .55rem .7rem;
+  display: flex; flex-direction: column; gap: .25rem;
+}
+.workflow .step-title {
+  background: none; border: 0; padding: 0; text-align: left;
+  color: var(--text); font-weight: 600; font-size: 13.5px;
+  display: flex; align-items: center; gap: .45rem;
+}
+.workflow .step-title:hover { color: var(--accent); }
+.workflow .step-num {
+  flex: 0 0 auto; width: 1.35rem; height: 1.35rem; border-radius: 50%;
+  border: 1px solid var(--line); color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+/* Clamped, the same way `.scene-title` is. Step 3's hint runs to six lines about
+   perceptual hashing, and the strip is stuck to the top of the page, so a long
+   hint costs viewport on every screen for the whole session. The step's own
+   section carries the full text. */
+.workflow .step-hint {
+  color: var(--muted); font-size: 12.5px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* The figures inside a hint are the same numbers the pills carry, so they read
+   the same way the pills' do. */
+.workflow .step-hint b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+.workflow .is-done .step-num {
+  border-color: var(--good); color: var(--good);
+}
+.workflow .is-current {
+  border-color: var(--accent);
+  background: linear-gradient(var(--bg-3), var(--bg-2));
+}
+.workflow .is-current .step-num {
+  border-color: var(--accent); background: var(--accent); color: var(--bg);
+}
+.workflow .is-current .step-hint { color: var(--text); }
+.workflow .is-next { opacity: .55; }
+
+/* -------------------------------------------- library: the step sections */
+
+/* One collapsible panel per step, because five open at once put the Apply
+   button halfway down a page of a thousand rows. A head is always a full row:
+   number, title, the live summary, a count badge and a chevron - so a collapsed
+   step still answers "how much is in there" without being opened. */
+
+.lib-sections { display: grid; gap: .6rem; }
+
+.lib-section {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); overflow: hidden;
+  /* Set from JS to clear the two sticky bars when a step title scrolls here.
+     The value is a fallback for the first paint only. */
+  scroll-margin-top: 10rem;
+}
+.lib-section.is-next { opacity: .6; }
+/* Marked on its head only: a pink frame round a list hundreds of cards long
+   is a lot of pink for "you are here". */
+.lib-section.is-current > .lib-head { box-shadow: inset 3px 0 0 var(--accent); }
+
+.lib-head {
+  width: 100%; display: grid; align-items: center;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+  gap: .6rem; text-align: left;
+  background: none; border: 0; border-bottom: 1px solid transparent;
+  padding: .7rem .9rem; color: var(--text);
+}
+/* Only when open: a separator under a collapsed head is a line under nothing,
+   and five of them in a row read as an empty table. */
+.lib-section.is-open .lib-head { border-bottom-color: var(--line); }
+.lib-head:hover { background: var(--bg-3); }
+.lib-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.lib-num {
+  width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  border: 1px solid var(--line); color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.lib-section.is-done .lib-num { border-color: var(--good); color: var(--good); }
+.lib-section.is-current .lib-num {
+  border-color: var(--accent); background: var(--accent); color: var(--bg);
+}
+
+.lib-title { font-weight: 600; font-size: 13.5px; }
+.lib-section.is-current .lib-title { color: var(--accent); }
+
+/* One line, always. A summary that wraps changes the head's height as the
+   numbers change, and a row of heads that jitter every two seconds is worse
+   than no summary at all. */
+.lib-summary {
+  color: var(--muted); font-size: 12.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lib-section.is-current > .lib-head .lib-summary { color: var(--text); }
+
+.lib-badge {
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: .05rem .5rem; font-size: 11.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+/* The head's own count only: the model groups inside use `.lib-badge` too. */
+.lib-section.is-current > .lib-head .lib-badge {
+  border-color: var(--accent); color: var(--accent);
+}
+
+.lib-chev { color: var(--muted); font-size: 11px; transition: transform .15s; }
+.lib-section.is-open .lib-chev { transform: rotate(180deg); }
+
+.lib-body { padding: .2rem 1rem 1rem; }
+/* These carry their own page-width padding. Inside a section they are already
+   indented, and a second 1.25rem pushes the rows out of line with the head
+   above them. */
+.lib-body .pad { padding-left: 0; padding-right: 0; }
+
+/* A nested collapsible: the Whisparr disagreements, the two review lists, the
+   tag-category picker. Quieter than a step head - it is a list inside a step,
+   not a step. */
+/* `.assisted` is excluded: it is a control inside a question card, styled with
+   the card, not another list of them. */
+.lib-body details:not(.assisted) > summary,
+.lib-group > summary {
+  cursor: pointer; padding: .45rem 0;
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+}
+.lib-group { border-top: 1px solid var(--line); }
+.lib-group:first-child { border-top: 0; }
+.lib-group-title { font-weight: 600; }
+.lib-group[open] > summary .lib-group-title { color: var(--accent); }
+.lib-group-lede { color: var(--muted); font-size: 12.5px; }
+
+.lib-filter {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  padding: .5rem 0 .7rem; border-bottom: 1px solid var(--line);
+  margin-bottom: .6rem;
+}
+.lib-filter input { width: 18rem; }
+
+/* What the step does and what it talks to: the first line of its body. */
+.step-line { margin: 0 0 .6rem; }
+
+/* Expand all / Collapse all, directly above the first model. Right-aligned. */
+.lib-expand-row {
+  display: flex; justify-content: flex-end; gap: .5rem; margin: .2rem 0 .5rem;
+}
+
+/* An error says the same thing twice - here, and in the sticky bar - so both
+   carry the Dismiss that clears the pair. Left-aligned, unlike a plain
+   `.empty`: this is a sentence to read, not a state to notice. */
+.lib-error {
+  display: flex; align-items: flex-start; gap: .75rem;
+  padding: .7rem .9rem; text-align: left;
+  border: 1px solid var(--bad); border-radius: var(--radius-lg);
+  background: rgba(232, 75, 75, .07);
+}
+.lib-error-text { flex: 1; min-width: 0; }
+.lib-error pre { white-space: pre-wrap; word-break: break-word; margin: .4rem 0 0; }
+
+/* ------------------------------------------ library: the sticky action bar */
+
+/* Whatever the current step's one action is, it is here, at the bottom of the
+   viewport, next to a line saying where the library stands - so finishing a run
+   never means hunting for the button. It is hidden while the step's own button
+   is on screen (see setLibraryBarVisibility), and .lib-bar-gap holds its place. */
+.lib-bar {
+  position: sticky; bottom: 0; z-index: 25;
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  margin: 1rem -1.25rem 0; padding: .7rem 1.25rem;
+  background: var(--bg-2); border-top: 1px solid var(--line);
+  box-shadow: 0 -10px 22px -14px rgba(0, 0, 0, .95);
+}
+.lib-bar-gap { margin-top: 1rem; }
+.lib-bar-status {
+  flex: 1; min-width: 14rem;
+  display: flex; align-items: baseline; gap: .55rem; flex-wrap: wrap;
+}
+.lib-bar-step {
+  font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--accent); white-space: nowrap;
+}
+.lib-bar-line { color: var(--muted); font-size: 12.5px; }
+.lib-bar-line b { color: var(--text); font-variant-numeric: tabular-nums; }
+.lib-bar-status.is-bad .lib-bar-step { color: var(--bad); }
+.lib-bar-status.is-bad .lib-bar-line { color: var(--bad); }
+.lib-bar-actions {
+  margin-left: auto;
+  display: flex; align-items: center; gap: .7rem; flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------- library */
+
+.pad { padding: .6rem 1.25rem; }
+.hint.pad { padding-top: 0; }
+ul.plain { margin: .4rem 0; padding-left: 1.1rem; }
+.pill.good { border-color: var(--good); color: var(--good); }
+.pill.warn { border-color: var(--warn); color: var(--warn); }
+.pill.bad { border-color: var(--bad); color: var(--bad); }
+/* Worn by exactly one card in a review grid — the ranked first one — so it has
+   to read as "start here" rather than as one more green fact beside the hashes. */
+.pill.accent { border-color: var(--accent); color: var(--accent); }
+.small { font-size: 12px; }
+
+.map-table { width: 100%; border-collapse: collapse; margin-top: .6rem; }
+.map-table th, .map-table td {
+  text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--line);
+}
+.map-table th { color: var(--muted); font-weight: 500; font-size: 12px; }
+.map-input { width: 100%; }
+
+/* What the write does to each field: the verb badge's tone is the kind of
+   change - amber overwrites, blue fills a blank, green adds, grey leaves it
+   alone - and a row that changes nothing is muted (`.compare-row.is-quiet`), so
+   the rows that do change are the ones the eye lands on. */
+.field-summary { color: var(--muted); font-size: 12.5px; margin: .1rem 0 .35rem; }
+.field-label { color: var(--muted); }
+.fverb {
+  justify-self: start; border-radius: var(--radius-sm); padding: .05rem .45rem;
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+}
+.fverb.overwrite { background: rgba(255, 184, 74, .14); color: var(--warn); }
+.fverb.fill { background: rgba(108, 182, 255, .14); color: var(--fill); }
+.fverb.add { background: rgba(79, 180, 119, .14); color: var(--good); }
+.fverb.same { background: var(--bg-3); color: var(--muted); }
+.fchip {
+  display: inline-block; border: 1px solid var(--line); border-radius: 999px;
+  padding: 0 .55rem; margin: .1rem .2rem .1rem 0; font-size: 12.5px;
+}
+.fchip.kept { color: var(--muted); }
+.fchip.added { border-color: var(--good); color: var(--good); }
+.fnew { color: var(--fill); font-size: 11px; margin-left: .25rem; }
+.fnote { color: var(--muted); font-size: 12px; }
+.field-foot { color: var(--muted); font-size: 12px; margin-top: .35rem; }
+
+/* ------------------------------------------- identify by fingerprint */
+
+/* Coloured variants of `.empty`, so a warn or good notice does not render as
+   plain muted text - a deps-missing notice would read exactly like an ordinary
+   "nothing here". */
+.empty.warn { color: var(--warn); }
+.empty.good { color: var(--good); }
+
+/* One question: the file across the top, the covers below it. No cover grid
+   rules live here — `.scene-grid` / `.scene-card` above already carry the 5:3
+   covers and the lazy loading, and a second copy would drift from them. */
+.question {
+  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: .8rem 1rem; margin-bottom: .9rem;
+}
+.question-head { display: grid; gap: .25rem; margin-bottom: .6rem; }
+.question-head code { word-break: break-all; }
+.cand-badges { display: flex; flex-wrap: wrap; gap: .3rem; padding-top: .15rem; }
+
+/* The two signposts that keep this block from being misread: one over the file
+   on disk, one over the grid of StashDB scenes. Quiet on purpose — the path
+   under the first one is the thing to read, not the label. */
+.lib-label {
+  color: var(--muted); font-size: 11px; text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.question > .lib-label { margin: .2rem 0 .35rem; }
+.question > .hint.warn { color: var(--warn); margin-bottom: .4rem; }
+
+/* Metadata counts and the outward link, on one line under the studio. */
+.scene-facts {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: .5rem; font-size: 12px;
+}
+/* The scene link, and the Connect step's links out to StashDB and Pronoisseur. */
+.scene-link, .ext-link { color: var(--accent); text-decoration: none; white-space: nowrap; }
+.scene-link:hover, .ext-link:hover { text-decoration: underline; }
+
+/* ---------------------------------------- review: grouped by model */
+
+/* A group's accept button rides at the end of its head, so a shut group can be
+   accepted without opening it. */
+.lib-group > summary [data-accept-model] { margin-left: auto; }
+/* The other groups a video is also drawn in. */
+.also {
+  color: var(--fill); font-size: 11.5px; white-space: nowrap;
+  border: 1px solid rgba(108, 182, 255, .35); border-radius: 999px;
+  padding: 0 .45rem; margin-left: .4rem;
+}
+
+/* One tab per StashDB match, each with a small copy of its cover. */
+.match-tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .6rem; }
+.match-tab {
+  display: flex; align-items: center; gap: .5rem; text-align: left;
+  max-width: 22rem; padding: .2rem .6rem .2rem .2rem; cursor: pointer;
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius);
+  color: var(--muted); font-size: 12.5px;
+}
+.match-tab:hover { border-color: var(--accent); }
+.match-tab.is-on {
+  border-color: var(--accent); color: var(--text); background: rgba(255, 77, 157, .12);
+}
+.tab-thumb {
+  flex: none; width: 64px; aspect-ratio: 5 / 3; border-radius: var(--radius-sm); overflow: hidden;
+  background: var(--bg-3); display: grid; place-items: center;
+}
+.tab-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tab-thumb .no-cover { color: var(--muted); font-size: 9px; }
+.tab-text { display: grid; gap: .05rem; min-width: 0; }
+.tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-note { font-size: 11.5px; }
+.tab-note.is-accent { color: var(--accent); font-weight: 600; }
+.tab-note.is-warn { color: var(--warn); }
+
+/* Your file and the match, side by side and the same size. `contain`, not
+   `cover`: a portrait clip shown cropped to landscape would hide the very thing
+   that tells it apart from the scene beside it. Capped in width, so on a wide
+   screen two pictures are a comparison and not most of the page. */
+.compare, .compare-pics.is-solo { max-width: 52rem; }
+.compare-pics { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+.compare-pic { margin: 0; display: grid; gap: .3rem; align-content: start; }
+.pic {
+  position: relative; aspect-ratio: 5 / 3; overflow: hidden;
+  background: var(--bg-3); border-radius: var(--radius);
+  display: grid; place-items: center;
+}
+/* Pinned to the box: a grid item's percentage height does not resolve against
+   an aspect-ratio box, and a portrait still would grow to its own height and be
+   cropped - exactly the shape `contain` is here to keep. */
+.pic img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; display: block;
+}
+.pic .no-cover { color: var(--muted); font-size: 12px; }
+.pic .duration {
+  position: absolute; right: .45rem; bottom: .45rem;
+  background: rgba(20, 20, 23, .78); color: var(--text);
+  border-radius: var(--radius-sm); padding: .05rem .35rem;
+  font-size: 11.5px; font-variant-numeric: tabular-nums;
+}
+.frame-pic .no-frame {
+  display: none; color: var(--muted); font-size: 12px; padding: 1rem; text-align: center;
+}
+.frame-pic.is-missing img { display: none; }
+.frame-pic.is-missing .no-frame { display: block; }
+.frame-step {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.compare-none { align-self: center; font-size: 13px; }
+
+/* Field by field: what the file has now, and what picking the match does. */
+.compare-rows { margin-top: .7rem; }
+.compare-row {
+  display: grid; grid-template-columns: 7.5rem 1fr 1fr; gap: .9rem;
+  align-items: baseline; padding: .3rem 0; border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.compare-row.compare-head { border-top: 0; padding-bottom: .1rem; }
+.compare-row.is-quiet .compare-next { color: var(--muted); }
+.compare-now, .compare-next { min-width: 0; overflow-wrap: anywhere; }
+.compare-next .fverb { margin-right: .45rem; }
+.compare-next .good { color: var(--good); }
+.compare-next .warn { color: var(--warn); }
+.compare-actions { margin-top: .5rem; }
+
+/* ------------------------------------------ review and write: one list */
+
+/* What each card is, at its top-left: the three kinds in the one list. */
+.card-top { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
+.card-top .tick { margin: 0; line-height: 0; }
+.card-top .tick input { width: 16px; height: 16px; accent-color: var(--accent); }
+.kind-badge {
+  border-radius: var(--radius-sm); padding: .05rem .45rem; font-size: 10.5px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.kind-badge.ready { background: rgba(79, 180, 119, .14); color: var(--good); }
+.kind-badge.pick { background: rgba(255, 184, 74, .14); color: var(--warn); }
+.kind-badge.none { background: rgba(232, 75, 75, .14); color: var(--bad); }
+.kind-badge.wait { background: rgba(163, 163, 172, .16); color: var(--muted); }
+.question.is-ready .field-summary { margin-top: .1rem; }
+/* How the match was made, beside the kind: plain words, not a pill. */
+.how-matched { color: var(--muted); font-size: 12.5px; }
+.how-matched.is-warn { color: var(--warn); }
+
+/* "How this works" and the tag-category picker: one kind of fold-out over the
+   list, read once and folded away. */
+.how-box, .fold {
+  border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg-2);
+  padding: .55rem .85rem; margin: 0 0 .75rem;
+}
+.how-box summary, .fold > summary { cursor: pointer; font-weight: 700; font-size: 13px; }
+.how-box ol { margin: .45rem 0 .1rem; padding-left: 1.2rem; }
+.how-box li { margin: .25rem 0; font-size: 13px; line-height: 1.45; }
+.how-box .kind-badge { margin-right: .2rem; }
+
+/* A model's own tick, at the front of its head. The gap keeps names in line
+   when a group has nothing ready to tick. */
+.group-pick { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+.group-pick-gap { display: inline-block; width: 16px; }
+
+/* All / Choose a match / Matched / No match. */
+.kind-chips { display: inline-flex; flex-wrap: wrap; gap: .35rem; }
+.kind-chip {
+  border: 1px solid var(--line); border-radius: 999px; padding: .1rem .65rem;
+  background: transparent; color: var(--muted); font-size: 12px;
+}
+.kind-chip:hover { border-color: var(--muted); color: var(--text); }
+.kind-chip.is-on { border-color: var(--accent); color: var(--accent); }
+
+.write-bar { padding: .2rem 0 .5rem; }
+/* Recommended: the accent as a tinted label, not filled, so it never reads as
+   one more pink button beside Use this match. */
+.pill.rec {
+  background: var(--accent-muted); border-color: var(--accent); color: var(--accent);
+  font-weight: 600;
+}
+/* Wide screens: the two pictures on the left, what tagging does on the right.
+   A card is about a third shorter, and the right half of the list is no longer
+   empty. Below this width the fields sit under the pictures, as before. */
+@media (min-width: 1280px) {
+  .compare {
+    max-width: none; display: grid; column-gap: 1.5rem; align-items: start;
+    grid-template-columns: minmax(0, 44rem) minmax(26rem, 1fr);
+    grid-template-rows: auto auto 1fr;
+  }
+  .compare > .compare-pics { grid-column: 1; grid-row: 1 / 4; }
+  .compare > .compare-rows { grid-column: 2; grid-row: 1; margin-top: 0; }
+  /* The after-tagging side carries the verbs and the new chips, so it gets the
+     wider share of the column. */
+  .compare > .compare-rows .compare-row {
+    grid-template-columns: 6.5rem minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+  .compare > .compare-actions { grid-column: 2; grid-row: 2; }
+  .compare > .field-foot { grid-column: 2; grid-row: 3; }
+}
+@media (max-width: 640px) {
+  .compare-pics { grid-template-columns: 1fr; }
+  .compare-row { grid-template-columns: 1fr 1fr; gap: .2rem .6rem; }
+  .compare-row .field-label { grid-column: 1 / -1; }
+}
+
+.assisted { margin-top: .6rem; border-top: 1px solid var(--line); padding-top: .5rem; }
+.assisted summary { cursor: pointer; color: var(--accent); font-size: 13px; }
+.assisted .toolbar { padding-bottom: .4rem; }

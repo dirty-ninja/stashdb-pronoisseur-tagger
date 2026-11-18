@@ -1,0 +1,12 @@
+{
+  "stashdb_api_key": "",
+  "stashdb_endpoint": "https://stashdb.org/graphql",
+  "bind_port": 8426,
+  "request_interval_seconds": 0.34,
+  "state_db_path": "tagger-state.db",
+  "pronoisseur_url": "http://127.0.0.1:8869",
+  "pronoisseur_token": "",
+  "pronoisseur_page_size": 500,
+  "ffmpeg_path": "ffmpeg",
+  "ffprobe_path": "ffprobe"
+}
